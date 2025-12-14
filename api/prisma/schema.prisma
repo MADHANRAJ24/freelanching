@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Role {
+  USER
+  CLIENT
+  FREELANCER
+  ADMIN
+}
+
+enum ProjectStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum BudgetType {
+  FIXED
+  HOURLY
+}
+
+enum ProposalStatus {
+  PENDING
+  SHORTLISTED
+  ACCEPTED
+  REJECTED
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  PAYMENT_ESCROW
+  PAYMENT_RELEASE
+  REFUND
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum KycStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  NOT_SUBMITTED
+}
+
+// Models
+
+model User {
+  id             Int       @id @default(autoincrement())
+  email          String    @unique
+  password       String
+  name           String?
+  username       String?   @unique
+  bio            String?
+  role           Role      @default(USER)
+  
+  // Profile
+  skills         String[]
+  languages      String[]  // ["en", "hi", "ta"]
+  hourlyRate     Decimal?
+  isVerified     Boolean   @default(false)
+  kycStatus      KycStatus @default(NOT_SUBMITTED)
+  
+  // Wallet
+  walletBalance  Decimal   @default(0.0)
+  
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  // Relations
+  projectsOwned  Project[] @relation("ClientProjects")
+  proposals      Proposal[]
+  reviewsWritten Review[]  @relation("Reviewer")
+  reviewsReceived Review[] @relation("Reviewee")
+  
+  sentMessages   Message[] @relation("Sender")
+  transactions   Transaction[]
+  
+  conversations  Conversation[] @relation("UserConversations")
+}
+
+model Project {
+  id             Int           @id @default(autoincrement())
+  title          String
+  description    String
+  budget         Decimal
+  budgetType     BudgetType    @default(FIXED)
+  currency       String        @default("INR") // Default to Indian Rupee
+  skillsRequired String[]
+  deadline       DateTime?
+  status         ProjectStatus @default(OPEN)
+  
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  
+  clientId       Int
+  client         User          @relation("ClientProjects", fields: [clientId], references: [id])
+  
+  proposals      Proposal[]
+}
+
+model Proposal {
+  id             Int            @id @default(autoincrement())
+  coverLetter    String
+  bidAmount      Decimal
+  currency       String         @default("INR")
+  estimatedDays  Int
+  status         ProposalStatus @default(PENDING)
+  
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  
+  projectId      Int
+  project        Project        @relation(fields: [projectId], references: [id])
+  
+  freelancerId   Int
+  freelancer     User           @relation(fields: [freelancerId], references: [id])
+}
+
+model Review {
+  id             Int      @id @default(autoincrement())
+  rating         Int      // 1-5
+  comment        String?
+  createdAt      DateTime @default(now())
+  
+  reviewerId     Int
+  reviewer       User     @relation("Reviewer", fields: [reviewerId], references: [id])
+  
+  revieweeId     Int
+  reviewee       User     @relation("Reviewee", fields: [revieweeId], references: [id])
+  
+  projectId      Int?     // Optional link to project
+}
+
+// Real-time Chat & AI
+
+model Conversation {
+  id             Int       @id @default(autoincrement())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  participants   User[]    @relation("UserConversations")
+  messages       Message[]
+}
+
+model Message {
+  id             Int       @id @default(autoincrement())
+  content        String
+  
+  // AI Translation
+  translatedContent Json?   // Store translations like { "hi": "...", "ta": "..." }
+  originalLang      String? // e.g., "en"
+  
+  createdAt      DateTime  @default(now())
+  isRead         Boolean   @default(false)
+  
+  conversationId Int
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  
+  senderId       Int
+  sender         User      @relation("Sender", fields: [senderId], references: [id])
+}
+
+// Wallet & Payments
+
+model Transaction {
+  id             Int               @id @default(autoincrement())
+  amount         Decimal
+  currency       String            @default("INR")
+  type           TransactionType
+  status         TransactionStatus @default(PENDING)
+  description    String?
+  
+  // Payment Gateway Details
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  
+  userId         Int
+  user           User              @relation(fields: [userId], references: [id])
+}
