@@ -8,7 +8,7 @@ export class AuthController {
     constructor(private authService: AuthService) { }
 
     @Post('login')
-    async login(@Body() req) {
+    async login(@Body() req: { email: string; password: string }) {
         // In a real app, use LocalAuthGuard with Passport
         // Here simplifying: validate manually or assume req has credentials
         const user = await this.authService.validateUser(req.email, req.password);
@@ -25,7 +25,7 @@ export class AuthController {
 
     @UseGuards(AuthGuard('jwt'))
     @Get('profile')
-    getProfile(@Request() req) {
+    getProfile(@Request() req: any) {
         return req.user;
     }
 }

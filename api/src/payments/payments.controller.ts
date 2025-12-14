@@ -9,19 +9,19 @@ export class PaymentsController {
 
     @UseGuards(AuthGuard('jwt'))
     @Post('create-order')
-    createOrder(@Request() req, @Body() dto: CreatePaymentDto) {
+    createOrder(@Request() req: any, @Body() dto: CreatePaymentDto) {
         return this.paymentsService.createOrder(dto, req.user.id);
     }
 
     @UseGuards(AuthGuard('jwt'))
     @Post('verify')
-    verifyPayment(@Request() req, @Body() dto: VerifyPaymentDto) {
+    verifyPayment(@Request() req: any, @Body() dto: VerifyPaymentDto) {
         return this.paymentsService.verifyPayment(dto, req.user.id);
     }
 
     @UseGuards(AuthGuard('jwt'))
     @Get('transactions')
-    getTransactions(@Request() req) {
+    getTransactions(@Request() req: any) {
         return this.paymentsService.getTransactions(req.user.id);
     }
 }

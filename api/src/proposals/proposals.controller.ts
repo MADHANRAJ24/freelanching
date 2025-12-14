@@ -10,7 +10,7 @@ export class ProposalsController {
 
     @UseGuards(AuthGuard('jwt'))
     @Post()
-    create(@Request() req, @Param('projectId') projectId: string, @Body() createProposalDto: CreateProposalDto) {
+    create(@Request() req: any, @Param('projectId') projectId: string, @Body() createProposalDto: CreateProposalDto) {
         // Should verify user is FREELANCER
         return this.proposalsService.create(createProposalDto, +projectId, req.user.id);
     }

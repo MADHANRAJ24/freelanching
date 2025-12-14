@@ -10,14 +10,14 @@ export class ProjectsController {
 
     @UseGuards(AuthGuard('jwt'))
     @Post()
-    create(@Request() req, @Body() createProjectDto: CreateProjectDto) {
+    create(@Request() req: any, @Body() createProjectDto: CreateProjectDto) {
         return this.projectsService.create(createProjectDto, req.user.id);
     }
 
     @Get()
-    findAll(@Query() query) {
+    findAll(@Query() query: any) {
         // Build filters from query
-        const filters = {};
+        const filters: any = {};
         if (query.status) filters['status'] = query.status;
         if (query.skill) filters['skillsRequired'] = { has: query.skill };
 
